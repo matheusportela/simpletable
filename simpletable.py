@@ -18,29 +18,24 @@ __author__  = 'Matheus Vieira Portela'
 #   - First version
 # 2014-08-05: v0.2 MVP:
 #   - Method for defining header rows
-#   - HTMLTable method to create a HTMLTable from lists
+#   - SimpleTable method to create a SimpleTable from lists
+#   - Method to create a table from a simple list of elements and a column size
 
 ### TODO ###
-# - Method to create a table from a simple list of elements and a column size
-#   Example:
-#   data = ['one','two','three','four','five','six','seven','eight','nine']
-#   table = HTMLTable.table_from_list(data, cols=3)
-#   
-#   Result:
-#   one     two    three
-#   four    five   six
-#   seven   eight  nine
+# - Enable SimplePage to accept a list of tables
+# - Enable SimplePage to iterate over its tables
 
 ### REFERENCES ###
 # Decalage HTML.py module: http://www.decalage.info/python/html
 
 import codecs
 
-class HTMLTableCell(object):
-    """A table class to create HTML table cells.
 
-    Usage:
-    cell = HTMLTableCell('Hello, world!')
+class SimpleTableCell(object):
+    """A table class to create table cells.
+
+    Example:
+    cell = SimpleTableCell('Hello, world!')
     """
 
     def __init__(self, text, header=False):
@@ -60,33 +55,33 @@ class HTMLTableCell(object):
         else:    
             return '<td>%s</td>' %(self.text)
 
-class HTMLTableRow(object):
-    """A table class to create HTML table rows, populated by HTML table
-    cell.
 
-    Usage:
+class SimpleTableRow(object):
+    """A table class to create table rows, populated by table cells.
+
+    Example:
     # Row from list
-    row = HTMLTableRow(['Hello,', 'world!'])
+    row = SimpleTableRow(['Hello,', 'world!'])
 
-    # Row from HTMLTableCell
-    cell1 = HTMLTableCell('Hello,')
-    cell2 = HTMLTableCell('world!')
-    row = HTMLTableRow([cell1, cell2])
+    # Row from SimpleTableCell
+    cell1 = SimpleTableCell('Hello,')
+    cell2 = SimpleTableCell('world!')
+    row = SimpleTableRow([cell1, cell2])
     """
     def __init__(self, cells=[], header=False):
         """Table row constructor.
 
         Keyword arguments:
-        cells -- iterable of HTMLTableCell (default None)
+        cells -- iterable of SimpleTableCell (default None)
         header -- flag to indicate this row is a header row.
-                  if the cells are HTMLTableCell, it is the programmer's
+                  if the cells are SimpleTableCell, it is the programmer's
                   responsibility to verify whether it was created with the
                   header flag set to True.
         """
-        if isinstance(cells[0], HTMLTableCell):
+        if isinstance(cells[0], SimpleTableCell):
             self.cells = cells
         else:
-            self.cells = [HTMLTableCell(cell, header=header) for cell in cells]
+            self.cells = [SimpleTableCell(cell, header=header) for cell in cells]
         
         self.header = header
         
@@ -109,52 +104,52 @@ class HTMLTableRow(object):
             yield cell
 
     def add_cell(self, cell):
-        """Add a HTMLTableCell object to the list of cells."""
+        """Add a SimpleTableCell object to the list of cells."""
         self.cells.append(cell)
 
     def add_cells(self, cells):
-        """Add a list of HTMLTableCell objects to the list of cells."""
+        """Add a list of SimpleTableCell objects to the list of cells."""
         for cell in cells:
             self.cells.append(cell)
 
 
-class HTMLTable(object):
+class SimpleTable(object):
     """A table class to create HTML tables, populated by HTML table rows.
 
-    Usage:
+    Example:
     # Table from lists
-    table = HTMLTable([['Hello,', 'world!'], ['How', 'are', 'you?']])
+    table = SimpleTable([['Hello,', 'world!'], ['How', 'are', 'you?']])
 
     # Table with header row
-    table = HTMLTable([['Hello,', 'world!'], ['How', 'are', 'you?']],
+    table = SimpleTable([['Hello,', 'world!'], ['How', 'are', 'you?']],
                       header_row=['Header1', 'Header2', 'Header3'])
 
-    # Table from HTMLTableRow
-    rows = HTMLTableRow(['Hello,', 'world!'])
-    table = HTMLTable(rows)
+    # Table from SimpleTableRow
+    rows = SimpleTableRow(['Hello,', 'world!'])
+    table = SimpleTable(rows)
     """
     def __init__(self, rows=[], header_row=None, css_class=None):
         """Table constructor.
 
         Keyword arguments:
-        rows -- iterable of HTMLTableRow
+        rows -- iterable of SimpleTableRow
         header_row -- row that will be displayed at the beginning of the table.
-                      if this row is HTMLTableRow, it is the programmer's
+                      if this row is SimpleTableRow, it is the programmer's
                       responsibility to verify whether it was created with the
                       header flag set to True.
         css_class -- table CSS class
         """
-        if isinstance(rows[0], HTMLTableRow):
+        if isinstance(rows[0], SimpleTableRow):
             self.rows = rows
         else:
-            self.rows = [HTMLTableRow(row) for row in rows]
+            self.rows = [SimpleTableRow(row) for row in rows]
 
         if header_row is None:
             self.header_row = None
-        elif isinstance(header_row, HTMLTableRow):
+        elif isinstance(header_row, SimpleTableRow):
             self.header_row = header_row
         else:
-            self.header_row = HTMLTableRow(header_row, header=True)
+            self.header_row = SimpleTableRow(header_row, header=True)
 
         self.css_class = css_class
 
@@ -183,11 +178,11 @@ class HTMLTable(object):
             yield row
 
     def add_row(self, row):
-        """Add a HTMLTableRow object to the list of rows."""
+        """Add a SimpleTableRow object to the list of rows."""
         self.rows.append(row)
 
     def add_rows(self, rows):
-        """Add a list of HTMLTableRow objects to the list of rows."""
+        """Add a list of SimpleTableRow objects to the list of rows."""
         for row in rows:
             self.rows.append(row)
 
@@ -198,7 +193,7 @@ class HTMLPage(object):
         """HTML page constructor.
 
         Keyword arguments:
-        table -- HTMLTable object
+        table -- SimpleTable object
         css -- Cascading Style Sheet specification that is appended before the
                table string
         encoding -- Characters encoding. Default: UTF-8
@@ -228,6 +223,23 @@ class HTMLPage(object):
         with codecs.open(filename, 'w', self.encoding) as outfile:
             for line in str(self):
                 outfile.write(line)
+
+
+def fit_data_to_columns(data, num_cols):
+    """Format data into the configured number of columns in a proper format to
+    generate a SimpleTable.
+
+    Example:
+    test_data = [str(x) for x in range(20)]
+    fitted_data = fit_data_to_columns(test_data, 5)
+    table = SimpleTable(fitted_data)
+    """
+    num_iterations = len(data)/num_cols
+
+    if len(data)%num_cols != 0:
+        num_iterations += 1
+
+    return [data[num_cols*i:num_cols*i + num_cols] for i in range(num_iterations)]
 
 
 ### Example usage ###
@@ -269,7 +281,7 @@ if __name__ == "__main__":
         font-weight: bold;
     }
     """
-    table = HTMLTable([['Hello,', 'world!'], ['How', 'are', 'you?']],
+    table = SimpleTable([['Hello,', 'world!'], ['How', 'are', 'you?']],
             header_row=['Header1', 'Header2', 'Header3'],
             css_class='mytable')
     page = HTMLPage(table, css=css)
