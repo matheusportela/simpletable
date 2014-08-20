@@ -9,8 +9,8 @@ tables based on Python native types, such as lists.
 Author's website: http://matheusvportela.wordpress.com/
 """
 
-__version__ = '0.2'
-__date__    = '2014-08-05'
+__version__ = '0.3'
+__date__    = '2014-08-20'
 __author__  = 'Matheus Vieira Portela'
 
 ### CHANGES ###
@@ -20,10 +20,12 @@ __author__  = 'Matheus Vieira Portela'
 #   - Method for defining header rows
 #   - SimpleTable method to create a SimpleTable from lists
 #   - Method to create a table from a simple list of elements and a column size
+# 2014-08-20: v0.3 MVP:
+#   - Enable SimplePage to accept a list of tables
+#   - Enable SimplePage to iterate over its tables
 
 ### TODO ###
-# - Enable SimplePage to accept a list of tables
-# - Enable SimplePage to iterate over its tables
+# 
 
 ### REFERENCES ###
 # Decalage HTML.py module: http://www.decalage.info/python/html
@@ -189,16 +191,16 @@ class SimpleTable(object):
 
 class HTMLPage(object):
     """A class to create HTML pages containing CSS and tables."""
-    def __init__(self, table=None, css=None, encoding="utf-8"):
+    def __init__(self, tables=[], css=None, encoding="utf-8"):
         """HTML page constructor.
 
         Keyword arguments:
-        table -- SimpleTable object
+        tables -- List of SimpleTable objects
         css -- Cascading Style Sheet specification that is appended before the
                table string
         encoding -- Characters encoding. Default: UTF-8
         """
-        self.table = table
+        self.tables = tables
         self.css = css
         self.encoding = encoding
         
@@ -213,8 +215,9 @@ class HTMLPage(object):
         page.append('<meta http-equiv="Content-Type" content="text/html;'
             'charset=%s">' % self.encoding)
 
-        if self.table:
+        for table in self.tables:
             page.append(str(table))
+            page.append('<br />')
 
         return '\n'.join(page)
 
@@ -223,6 +226,10 @@ class HTMLPage(object):
         with codecs.open(filename, 'w', self.encoding) as outfile:
             for line in str(self):
                 outfile.write(line)
+
+    def add_table(self, table):
+        """Add a SimpleTable to the page list of tables"""
+        self.tables.append(table)
 
 
 def fit_data_to_columns(data, num_cols):
@@ -281,9 +288,14 @@ if __name__ == "__main__":
         font-weight: bold;
     }
     """
-    table = SimpleTable([['Hello,', 'world!'], ['How', 'are', 'you?']],
+    table1 = SimpleTable([['Hello,', 'world!'], ['How', 'are', 'you?']],
             header_row=['Header1', 'Header2', 'Header3'],
             css_class='mytable')
-    page = HTMLPage(table, css=css)
+    table2 = SimpleTable([['Testing', 'this'], ['table', 'here']],
+            css_class='mytable')
+
+    page = HTMLPage()
+    page.add_table(table1)
+    page.add_table(table2)
+    page.css = css
     page.save("test.html")
-    print page
