@@ -221,6 +221,11 @@ class HTMLPage(object):
 
         return '\n'.join(page)
 
+    def __iter__(self):
+        """Iterate through tables"""
+        for table in self.tables:
+            yield table
+
     def save(self, filename):
         """Save HTML page to a file using the proper encoding"""
         with codecs.open(filename, 'w', self.encoding) as outfile:
